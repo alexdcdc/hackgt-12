@@ -1,46 +1,15 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Mail, Edit, Copy, Trash2 } from "lucide-react"
+import { Mail, Edit, Copy, Trash2, Play } from "lucide-react"
+import { EMAIL_TEMPLATES } from "@/lib/email-templates"
+import { useState } from "react"
 
-const emailTemplates = [
-  {
-    id: 1,
-    name: "At-Risk Student Meeting",
-    category: "Meeting Request",
-    usage: 24,
-    lastUsed: "2 hours ago",
-    preview:
-      "Hi {student_name}, I've noticed you might benefit from some additional support in {subject}. Would you be available for a brief meeting to discuss how we can help you succeed?",
-  },
-  {
-    id: 2,
-    name: "Positive Reinforcement",
-    category: "Encouragement",
-    usage: 18,
-    lastUsed: "1 day ago",
-    preview:
-      "Great work in {subject}, {student_name}! Your engagement has improved significantly. Keep up the excellent progress!",
-  },
-  {
-    id: 3,
-    name: "Session Reminder",
-    category: "Reminder",
-    usage: 45,
-    lastUsed: "3 hours ago",
-    preview:
-      "Reminder: You have an upcoming {subject} session on {date} at {time}. Please review the materials we discussed previously.",
-  },
-  {
-    id: 4,
-    name: "Topic Clarification",
-    category: "Academic Support",
-    usage: 12,
-    lastUsed: "5 days ago",
-    preview:
-      "Hi {student_name}, I noticed some confusion around {topic} in our recent session. I've prepared some additional resources that might help clarify these concepts.",
-  },
-]
+const emailTemplates = Object.values(EMAIL_TEMPLATES).map(template => ({
+  ...template,
+  usage: Math.floor(Math.random() * 50) + 1,
+  lastUsed: Math.random() > 0.5 ? `${Math.floor(Math.random() * 24)} hours ago` : `${Math.floor(Math.random() * 7)} days ago`,
+}))
 
 function getCategoryColor(category: string) {
   switch (category) {
@@ -58,6 +27,29 @@ function getCategoryColor(category: string) {
 }
 
 export function EmailTemplates() {
+  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null)
+
+  const handleTestTemplate = async (templateId: string) => {
+    try {
+      const response = await fetch('/api/engagement/process', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          testTemplate: true,
+          templateId,
+        }),
+      })
+      
+      if (response.ok) {
+        console.log('Template test sent successfully')
+      }
+    } catch (error) {
+      console.error('Error testing template:', error)
+    }
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -65,7 +57,7 @@ export function EmailTemplates() {
           <Mail className="h-5 w-5" />
           Email Templates
         </CardTitle>
-        <CardDescription>Pre-configured email templates for common scenarios</CardDescription>
+        <CardDescription>AI-powered email templates for student engagement</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
@@ -78,8 +70,20 @@ export function EmailTemplates() {
                     <Badge className={getCategoryColor(template.category)} variant="outline">
                       {template.category}
                     </Badge>
+                    {template.type === 'AT_RISK_ALERT' && (
+                      <Badge className="bg-orange-500/10 text-orange-400 border-orange-500/20" variant="outline">
+                        AI Triggered
+                      </Badge>
+                    )}
                   </div>
-                  <p className="text-xs text-muted-foreground line-clamp-3">{template.preview}</p>
+                  <p className="text-xs text-muted-foreground line-clamp-2">
+                    {template.subject.replace(/{[^}]+}/g, '[Variable]')}
+                  </p>
+                  <div className="mt-2">
+                    <p className="text-xs text-muted-foreground">
+                      Variables: {template.variables.join(', ')}
+                    </p>
+                  </div>
                 </div>
               </div>
 
@@ -89,18 +93,41 @@ export function EmailTemplates() {
               </div>
 
               <div className="flex items-center gap-1">
-                <Button variant="outline" size="sm" className="h-7 text-xs bg-transparent">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="h-7 text-xs bg-transparent"
+                  onClick={() => setSelectedTemplate(selectedTemplate === template.id ? null : template.id)}
+                >
                   <Edit className="h-3 w-3 mr-1" />
-                  Edit
+                  {selectedTemplate === template.id ? 'Hide' : 'Preview'}
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="h-7 text-xs bg-transparent"
+                  onClick={() => handleTestTemplate(template.id)}
+                >
+                  <Play className="h-3 w-3 mr-1" />
+                  Test
                 </Button>
                 <Button variant="outline" size="sm" className="h-7 text-xs bg-transparent">
                   <Copy className="h-3 w-3 mr-1" />
                   Copy
                 </Button>
-                <Button variant="outline" size="sm" className="h-7 text-xs text-red-400 bg-transparent">
-                  <Trash2 className="h-3 w-3" />
-                </Button>
               </div>
+
+              {selectedTemplate === template.id && (
+                <div className="mt-3 p-3 bg-muted rounded-lg">
+                  <h5 className="text-sm font-medium mb-2">Template Preview:</h5>
+                  <div 
+                    className="text-xs text-muted-foreground max-h-32 overflow-y-auto"
+                    dangerouslySetInnerHTML={{ 
+                      __html: template.content.replace(/{[^}]+}/g, '<span class="text-blue-400 font-mono">[Variable]</span>')
+                    }}
+                  />
+                </div>
+              )}
             </div>
           ))}
 

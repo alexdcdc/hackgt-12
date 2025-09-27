@@ -6,7 +6,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Mail, Send, Clock, CheckCircle, AlertCircle, Calendar, Filter } from "lucide-react"
+import { Mail, Send, Clock, CheckCircle, AlertCircle, Calendar, Filter, Bot, Play } from "lucide-react"
+import { useState, useEffect } from "react"
 
 const emailQueue = [
   {
@@ -99,6 +100,52 @@ function getPriorityColor(priority: string) {
 }
 
 export function EmailCenter() {
+  const [emails, setEmails] = useState(emailQueue)
+  const [isLoading, setIsLoading] = useState(false)
+
+  const fetchEmails = async () => {
+    setIsLoading(true)
+    try {
+      const response = await fetch('/api/emails')
+      if (response.ok) {
+        const data = await response.json()
+        setEmails(data.emails || emailQueue)
+      }
+    } catch (error) {
+      console.error('Error fetching emails:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const triggerAIProcessing = async () => {
+    setIsLoading(true)
+    try {
+      const response = await fetch('/api/engagement/process', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          processAll: true,
+          sessionId: 'current',
+        }),
+      })
+      
+      if (response.ok) {
+        await fetchEmails()
+      }
+    } catch (error) {
+      console.error('Error triggering AI processing:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchEmails()
+  }, [])
+
   return (
     <div className="space-y-6">
       {/* Email Stats */}
@@ -118,6 +165,29 @@ export function EmailCenter() {
           </Card>
         ))}
       </div>
+
+      {/* AI Agent Quick Actions */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Bot className="h-5 w-5" />
+            AI Agent Actions
+          </CardTitle>
+          <CardDescription>Quick actions for the AI email agent</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex gap-2">
+            <Button onClick={triggerAIProcessing} disabled={isLoading}>
+              <Play className="h-4 w-4 mr-2" />
+              {isLoading ? 'Processing...' : 'Process All Students'}
+            </Button>
+            <Button variant="outline" onClick={fetchEmails} disabled={isLoading}>
+              <Mail className="h-4 w-4 mr-2" />
+              Refresh Emails
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       <Tabs defaultValue="queue" className="space-y-4">
         <TabsList>
