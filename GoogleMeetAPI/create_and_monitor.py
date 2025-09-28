@@ -115,6 +115,7 @@ def main():
         print("Bot will join the meeting automatically when it starts.")
         print("You can run 'python get_bot.py <bot_id>' to check status later.")
         print(f"Bot ID: {bot_id}")
+        # Wait for webhook to then call get_bot
     else:
         print("Failed to get bot details.")
 
