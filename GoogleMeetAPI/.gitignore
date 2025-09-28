@@ -1,0 +1,20 @@
+credentials.json
+token.json
+
+# Environment variables and secrets
+.env
+.env.local
+.env.production
+.env.staging
+
+# API keys and credentials
+*.key
+secrets/
+config/secrets.json
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+*.pyc
+.__pycache__/
