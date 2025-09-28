@@ -14,6 +14,7 @@ import uuid
 from collections import defaultdict
 from supabase import create_client, Client
 from dotenv import load_dotenv
+from mastra_agent import MastraEngagementAgent
 
 # Add the GoogleMeetAPI directory to the path so we can import from create_and_monitor
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'GoogleMeetAPI'))
@@ -76,7 +77,85 @@ async def list_class_sessions(session: AsyncSession = Depends(get_session)):
     res = await session.execute(text(
         "SELECT id, name, AVG(engaged_percentage), COUNT(*), start_time, duration FROM public.class_sessions LEFT JOIN public.class_attendances ON id = session_id GROUP BY id"
     ))
-    return [{"id": row["id"], "average_engagement": row["avg"], "name": row["name"], "num_students": row["count"],"start_time": row["start_time"], "duration": row["duration"]} for row in res.mappings().all()]
+    return [{"id": row["id"], "duration": row["duration"]} for row in res.mappings().all()]
+
+# Mastra Agent Endpoints
+@app.post("/mastra/process-engagement")
+async def process_engagement():
+    """Trigger the Mastra agent to process engagement and send emails"""
+    try:
+        agent = MastraEngagementAgent()
+        result = agent.process_engagement_and_send_emails()
+        return {
+            "success": True,
+            "message": "Mastra engagement processing completed",
+            "result": result
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error processing engagement: {str(e)}")
+
+@app.get("/mastra/students-with-issues")
+async def get_students_with_issues():
+    """Get list of students with engagement issues"""
+    try:
+        agent = MastraEngagementAgent()
+        students = agent.get_students_with_engagement_issues()
+        return {
+            "success": True,
+            "students": students,
+            "count": len(students)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error getting students: {str(e)}")
+
+@app.post("/mastra/send-test-email")
+async def send_test_email(student_id: str, session_id: str):
+    """Send a test email to a specific student"""
+    try:
+        agent = MastraEngagementAgent()
+        
+        # Get student data
+        student_result = supabase.table("students").select("*").eq("id", student_id).execute()
+        if not student_result.data:
+            raise HTTPException(status_code=404, detail="Student not found")
+        
+        student = student_result.data[0]
+        
+        # Check if email already exists
+        if agent.check_email_exists(student_id, session_id):
+            return {
+                "success": False,
+                "message": "Email already exists for this student and session"
+            }
+        
+        # Generate and send email
+        first_name = student.get('first_name', student.get('fname', 'Unknown'))
+        last_name = student.get('last_name', student.get('lname', 'Unknown'))
+        
+        email_content = agent.generate_email_content({
+            'first_name': first_name,
+            'last_name': last_name,
+            'email': student['email'],
+            'engaged_percentage': 30.0,  # Mock low engagement
+            'disengaged_percentage': 60.0,
+            'confused_percentage': 10.0
+        })
+        subject = f"Test Email - {first_name}"
+        
+        if agent.send_email(student['email'], subject, email_content):
+            agent.log_email(student_id, session_id, email_content)
+            return {
+                "success": True,
+                "message": f"Test email sent to {student['email']}"
+            }
+        else:
+            return {
+                "success": False,
+                "message": "Failed to send email"
+            }
+            
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error sending test email: {str(e)}")
 
 @app.get("/metrics")
 async def list_metrics(session: AsyncSession = Depends(get_session)):
