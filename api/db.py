@@ -8,6 +8,10 @@ load_dotenv()
 print(os.environ)
 DB_URL = os.environ["DATABASE_URL"]
 
+# Convert postgresql:// to postgresql+asyncpg:// for async connections
+if DB_URL.startswith("postgresql://"):
+    DB_URL = DB_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
+
 # If you're using the pooled port 6543, prefer NullPool (PgBouncer handles pooling).
 # If you're on 5432, comment out poolclass=NullPool and set pool_size / max_overflow instead.
 engine = create_async_engine(
