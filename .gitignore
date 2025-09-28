@@ -1,1 +1,12 @@
 .env
+*.env
+*.DS_Store
+.env.local
+.env.production
+.env.staging
+.env.development
+.env.test
+.env.development.local
+.env.test.local
+.env.production.local
+.env.staging.local
