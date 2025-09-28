@@ -11,9 +11,9 @@ import time
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Facial-Emotion-Recognition-using-OpenCV-and-Deepface'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Facial-Emotion-Recognition-using-OpenCV-and-Deepface-main'))
 
-import simplified_analyzer.py
+from simplified_analyzer import SimplifiedAnalyzer
 
 def download_video_from_s3(s3_url: str, bot_id: str, custom_filename: Optional[str] = None) -> Dict:
     """
@@ -81,7 +81,7 @@ def download_video_from_s3(s3_url: str, bot_id: str, custom_filename: Optional[s
         logger.info(f"Download time: {download_time:.2f} seconds")
         logger.info(f"Download speed: {file_size / download_time / 1024 / 1024:.2f} MB/s")
 
-        analysis = simplified_analyzer(video_path)
+        analysis = SimplifiedAnalyzer(video_path)
         
         return {
             "status": "success",
