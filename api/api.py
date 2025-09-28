@@ -100,5 +100,29 @@ def process_json_and_store(json_path):
         print(f"📊 Student {face_id} ({student_id}): "
               f"E={engaged:.2f}%, D={disengaged:.2f}%, C={confused:.2f}%")
 
+
+
+def log_email(student_id: str, session_id: str, email_text: str):
+    """
+    Logs an email for a given student and session.
+    Inserts into the 'emails' table. 'id' is auto-incrementing int8 (BIGSERIAL).
+    """
+    response = supabase.table("emails").insert({
+        "student_id": student_id,
+        "session_id": session_id,
+        "email": email_text
+    }).execute()
+
+    if response.data:
+        new_id = response.data[0]["id"]
+        print(f"📧 Logged email id={new_id} for student={student_id}, session={session_id}")
+    else:
+        print("⚠️ Failed to insert email:", response)
+
+    return response
+
+
 if __name__ == "__main__":
-    process_json_and_store("test_data.json")
+    sid = "0070e29b-9b6a-41c0-88dd-f1d4f06a6856"
+    sessid = "96e38c7d-071d-4a99-91d8-a9128f162af4"
+    log_email(sid, sessid, "Follow-up: Please review the materials from last session.")
