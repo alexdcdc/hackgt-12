@@ -2,7 +2,6 @@ import type React from "react";
 import type { Metadata } from "next";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
-import { Analytics } from "@vercel/analytics/next";
 import { Suspense } from "react";
 import { AuthProvider } from "@/hooks/use-auth";
 import "./globals.css";
@@ -25,7 +24,6 @@ export default function RootLayout({
         <AuthProvider>
           <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>
         </AuthProvider>
-        <Analytics />
       </body>
     </html>
   );
