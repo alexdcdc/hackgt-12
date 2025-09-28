@@ -1,9 +1,18 @@
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Mail, Calendar, TrendingUp, TrendingDown, AlertTriangle, Eye } from "lucide-react"
+"use client";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Mail,
+  Calendar,
+  TrendingUp,
+  TrendingDown,
+  AlertTriangle,
+  Eye,
+} from "lucide-react";
+import { useEffect, useState } from "react";
 
 const students = [
   {
@@ -96,37 +105,58 @@ const students = [
     recentTopics: ["Analytical Chemistry", "Differential Equations"],
     meetingScheduled: false,
   },
-]
+];
 
 function getStatusColor(status: string) {
   switch (status) {
     case "engaged":
-      return "bg-green-500/10 text-green-400 border-green-500/20"
+      return "bg-green-500/10 text-green-400 border-green-500/20";
     case "moderate":
-      return "bg-yellow-500/10 text-yellow-400 border-yellow-500/20"
+      return "bg-yellow-500/10 text-yellow-400 border-yellow-500/20";
     case "at-risk":
-      return "bg-red-500/10 text-red-400 border-red-500/20"
+      return "bg-red-500/10 text-red-400 border-red-500/20";
     default:
-      return "bg-gray-500/10 text-gray-400 border-gray-500/20"
+      return "bg-gray-500/10 text-gray-400 border-gray-500/20";
   }
 }
 
 function getTrendIcon(trend: string) {
   switch (trend) {
     case "improving":
-      return <TrendingUp className="h-4 w-4 text-green-400" />
+      return <TrendingUp className="h-4 w-4 text-green-400" />;
     case "declining":
-      return <TrendingDown className="h-4 w-4 text-red-400" />
+      return <TrendingDown className="h-4 w-4 text-red-400" />;
     default:
-      return <div className="h-4 w-4" />
+      return <div className="h-4 w-4" />;
   }
 }
 
+interface Student {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  average_engagement: number;
+  total_sessions: number;
+  classes: string;
+}
+
 export function StudentList() {
+  const [students, setStudents] = useState<Student[]>([]);
+  const getData = async () => {
+    const response = await fetch("/api/students");
+    const jsonData = await response.json();
+    setStudents(jsonData);
+  };
+  useEffect(() => {
+    getData();
+  });
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">Showing {students.length} students</p>
+        <p className="text-sm text-muted-foreground">
+          Showing {students.length} students
+        </p>
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">Sort by:</span>
           <Button variant="ghost" size="sm">
@@ -137,17 +167,16 @@ export function StudentList() {
 
       <div className="grid gap-4">
         {students.map((student) => (
-          <Card key={student.id} className="hover:bg-accent/50 transition-colors">
+          <Card
+            key={student.id}
+            className="hover:bg-accent/50 transition-colors"
+          >
             <CardContent className="p-6">
               <div className="flex items-start justify-between">
                 <div className="flex items-start gap-4 flex-1">
                   <Avatar className="h-12 w-12">
-                    <AvatarImage src={student.avatar || "/placeholder.svg"} alt={student.name} />
                     <AvatarFallback>
-                      {student.name
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")}
+                      {student.first_name[0] + student.last_name[0]}
                     </AvatarFallback>
                   </Avatar>
 
@@ -155,83 +184,50 @@ export function StudentList() {
                     <div className="flex items-center justify-between">
                       <div>
                         <div className="flex items-center gap-3">
-                          <h3 className="font-semibold text-foreground">{student.name}</h3>
-                          <Badge className={getStatusColor(student.status)}>{student.status.replace("-", " ")}</Badge>
-                          {student.meetingScheduled && (
-                            <Badge variant="outline" className="text-blue-400 border-blue-400/20">
-                              Meeting Scheduled
-                            </Badge>
-                          )}
+                          <h3 className="font-semibold text-foreground">
+                            {student.first_name + " " + student.last_name}
+                          </h3>
                         </div>
-                        <p className="text-sm text-muted-foreground">{student.email}</p>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <Button variant="outline" size="sm">
-                          <Eye className="h-4 w-4 mr-2" />
-                          View Details
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className={student.status === "at-risk" ? "border-red-500/20 text-red-400" : ""}
-                        >
-                          <Mail className="h-4 w-4 mr-2" />
-                          {student.status === "at-risk" ? "Schedule Meeting" : "Send Email"}
-                        </Button>
+                        <p className="text-sm text-muted-foreground">
+                          {student.email}
+                        </p>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
-                          <span className="text-sm text-muted-foreground">Overall Engagement</span>
+                          <span className="text-sm text-muted-foreground">
+                            Overall Engagement
+                          </span>
                           <div className="flex items-center gap-1">
-                            {getTrendIcon(student.trend)}
-                            <span className="text-sm font-medium">{student.overallEngagement}%</span>
+                            <span className="text-sm font-medium">
+                              {student.average_engagement}%
+                            </span>
                           </div>
                         </div>
-                        <Progress value={student.overallEngagement} className="h-2" />
+                        <Progress
+                          value={student.average_engagement}
+                          className="h-2"
+                        />
                       </div>
 
                       <div className="space-y-1">
-                        <span className="text-sm text-muted-foreground">Sessions</span>
-                        <p className="text-sm font-medium text-foreground">{student.totalSessions}</p>
-                        <p className="text-xs text-muted-foreground">Last: {student.lastActive}</p>
+                        <span className="text-sm text-muted-foreground">
+                          Sessions
+                        </span>
+                        <p className="text-sm font-medium text-foreground">
+                          {student.total_sessions}
+                        </p>
                       </div>
 
                       <div className="space-y-1">
-                        <span className="text-sm text-muted-foreground">Confusion Events</span>
-                        <div className="flex items-center gap-1">
-                          <p className="text-sm font-medium text-foreground">{student.confusionIncidents}</p>
-                          {student.confusionIncidents > 5 && <AlertTriangle className="h-3 w-3 text-warning" />}
-                        </div>
-                      </div>
-
-                      <div className="space-y-1">
-                        <span className="text-sm text-muted-foreground">Subjects</span>
+                        <span className="text-sm text-muted-foreground">
+                          Classes
+                        </span>
                         <div className="flex flex-wrap gap-1">
-                          {student.subjects.map((subject) => (
-                            <Badge key={subject} variant="outline" className="text-xs">
-                              {subject}
-                            </Badge>
-                          ))}
+                          {student.classes}
                         </div>
-                      </div>
-                    </div>
-
-                    <div className="pt-2 border-t border-border">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <span className="text-sm text-muted-foreground">Recent Topics: </span>
-                          <span className="text-sm text-foreground">{student.recentTopics.join(", ")}</span>
-                        </div>
-                        {student.status === "at-risk" && (
-                          <Button variant="ghost" size="sm" className="text-red-400">
-                            <Calendar className="h-4 w-4 mr-2" />
-                            Auto-schedule meeting
-                          </Button>
-                        )}
                       </div>
                     </div>
                   </div>
@@ -242,5 +238,5 @@ export function StudentList() {
         ))}
       </div>
     </div>
-  )
+  );
 }
