@@ -37,11 +37,32 @@ async def list_students(session: AsyncSession = Depends(get_session)):
     ))
     return [{"id": row["id"], "email": row["email"], "first_name": row["first_name"], "last_name": row["last_name"], "average_engagement": row["avg"], "total_sessions": row["count"], 'classes': row['string_agg'] } for row in res.mappings().all()]
 
+@app.get("/students/at-risk")
+async def list_at_risk_students(session: AsyncSession = Depends(get_session)):
+    res = await session.execute(text(
+        "SELECT s.id, first_name, last_name, email, AVG(engaged_percentage) as avg, COUNT(*), string_agg(name, ',') FROM public.students as s LEFT JOIN public.class_attendances as a on s.id = student_id JOIN public.class_sessions as c ON session_id = c.id GROUP BY s.id ORDER BY avg ASC LIMIT 3"
+    ))
+    return [{"id": row["id"], "email": row["email"], "first_name": row["first_name"], "last_name": row["last_name"], "average_engagement": row["avg"], "total_sessions": row["count"], 'classes': row['string_agg'] } for row in res.mappings().all()]
+
+
+
 @app.get("/class-sessions")
 async def list_class_sessions(session: AsyncSession = Depends(get_session)):
     res = await session.execute(text(
-        "SELECT * FROM public.class_sessions ORDER BY id"
+        "SELECT id, name, AVG(engaged_percentage), COUNT(*), start_time, duration FROM public.class_sessions LEFT JOIN public.class_attendances ON id = session_id GROUP BY id"
     ))
+
+    return [{"id": row["id"], "average_engagement": row["avg"], "name": row["name"], "num_students": row["count"],"start_time": row["start_time"], "duration": row["duration"]} for row in res.mappings().all()]
+
+@app.get("/metrics")
+async def list_metrics(session: AsyncSession = Depends(get_session)):
+    res = await session.execute(text(
+        "SELECT AVG(engaged_percentage) as engagement, COUNT(DISTINCT student_id) as num_students, AVG(confused_percentage) as confusion, AVG(duration) as duration FROM public.class_attendances JOIN public.class_sessions ON session_id = id"
+    ))
+    metrics = res.mappings().all()[0]
+    print(metrics)
+
+    return metrics
 
 
 def process_json_and_store(json_path):
@@ -53,9 +74,9 @@ def process_json_and_store(json_path):
         return
 
     # Duration = last - first frame
-    first_frame = data[0].get("frame_number", 0)
-    last_frame = data[-1].get("frame_number", len(data) - 1)
-    duration = last_frame - first_frame
+    first_frame = data[0].get("timestamp", 0)
+    last_frame = data[-1].get("timestamp", len(data) - 1)
+    duration = (last_frame - first_frame)//60
 
     # Create new session
     session_id = str(uuid.uuid4())

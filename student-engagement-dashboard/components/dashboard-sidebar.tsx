@@ -17,7 +17,6 @@ import { usePathname, useRouter } from "next/navigation";
 const navigation = [
   { name: "Overview", href: "/", icon: Home },
   { name: "Students", href: "/students", icon: Users },
-  { name: "Analytics", href: "/analytics", icon: BarChart3 },
   { name: "Email Center", href: "/emails", icon: Mail },
 ];
 
@@ -83,16 +82,6 @@ export function DashboardSidebar() {
                 <p className="text-sm font-medium text-sidebar-foreground">
                   {stat.value}
                 </p>
-              </div>
-              <div
-                className={cn(
-                  "text-xs px-2 py-1 rounded",
-                  stat.trend === "up"
-                    ? "text-green-400 bg-green-400/10"
-                    : "text-red-400 bg-red-400/10"
-                )}
-              >
-                {stat.change}
               </div>
             </div>
           ))}

@@ -12,145 +12,19 @@ import {
   AlertTriangle,
   Eye,
 } from "lucide-react";
-import { useEffect, useState } from "react";
-
-const students = [
-  {
-    id: 1,
-    name: "Alex Chen",
-    email: "alex.chen@university.edu",
-    avatar: "/diverse-student-portraits.png",
-    overallEngagement: 45,
-    trend: "declining",
-    status: "at-risk",
-    lastActive: "2 days ago",
-    totalSessions: 24,
-    confusionIncidents: 8,
-    subjects: ["Physics", "Mathematics"],
-    recentTopics: ["Quantum Mechanics", "Calculus"],
-    meetingScheduled: false,
-  },
-  {
-    id: 2,
-    name: "Sarah Johnson",
-    email: "sarah.j@university.edu",
-    avatar: "/diverse-female-student.png",
-    overallEngagement: 87,
-    trend: "improving",
-    status: "engaged",
-    lastActive: "1 hour ago",
-    totalSessions: 32,
-    confusionIncidents: 2,
-    subjects: ["Chemistry", "Biology"],
-    recentTopics: ["Organic Chemistry", "Cell Biology"],
-    meetingScheduled: false,
-  },
-  {
-    id: 3,
-    name: "Mike Rodriguez",
-    email: "m.rodriguez@university.edu",
-    avatar: "/male-student-studying.png",
-    overallEngagement: 38,
-    trend: "declining",
-    status: "at-risk",
-    lastActive: "3 days ago",
-    totalSessions: 18,
-    confusionIncidents: 12,
-    subjects: ["Mathematics", "Physics"],
-    recentTopics: ["Linear Algebra", "Thermodynamics"],
-    meetingScheduled: true,
-  },
-  {
-    id: 4,
-    name: "Emma Wilson",
-    email: "emma.wilson@university.edu",
-    avatar: "/diverse-female-student.png",
-    overallEngagement: 92,
-    trend: "stable",
-    status: "engaged",
-    lastActive: "30 minutes ago",
-    totalSessions: 28,
-    confusionIncidents: 1,
-    subjects: ["Biology", "Chemistry"],
-    recentTopics: ["Genetics", "Biochemistry"],
-    meetingScheduled: false,
-  },
-  {
-    id: 5,
-    name: "David Kim",
-    email: "david.kim@university.edu",
-    avatar: "/asian-student-studying.png",
-    overallEngagement: 72,
-    trend: "stable",
-    status: "moderate",
-    lastActive: "1 day ago",
-    totalSessions: 26,
-    confusionIncidents: 4,
-    subjects: ["Mathematics", "Physics"],
-    recentTopics: ["Statistics", "Electromagnetism"],
-    meetingScheduled: false,
-  },
-  {
-    id: 6,
-    name: "Lisa Thompson",
-    email: "lisa.t@university.edu",
-    avatar: "/student-blonde.jpg",
-    overallEngagement: 65,
-    trend: "improving",
-    status: "moderate",
-    lastActive: "4 hours ago",
-    totalSessions: 22,
-    confusionIncidents: 5,
-    subjects: ["Chemistry", "Mathematics"],
-    recentTopics: ["Analytical Chemistry", "Differential Equations"],
-    meetingScheduled: false,
-  },
-];
-
-function getStatusColor(status: string) {
-  switch (status) {
-    case "engaged":
-      return "bg-green-500/10 text-green-400 border-green-500/20";
-    case "moderate":
-      return "bg-yellow-500/10 text-yellow-400 border-yellow-500/20";
-    case "at-risk":
-      return "bg-red-500/10 text-red-400 border-red-500/20";
-    default:
-      return "bg-gray-500/10 text-gray-400 border-gray-500/20";
-  }
-}
-
-function getTrendIcon(trend: string) {
-  switch (trend) {
-    case "improving":
-      return <TrendingUp className="h-4 w-4 text-green-400" />;
-    case "declining":
-      return <TrendingDown className="h-4 w-4 text-red-400" />;
-    default:
-      return <div className="h-4 w-4" />;
-  }
-}
-
-interface Student {
-  id: string;
-  first_name: string;
-  last_name: string;
-  email: string;
-  average_engagement: number;
-  total_sessions: number;
-  classes: string;
-}
+import { useCallback, useEffect, useState } from "react";
+import { Student } from "@/lib/types";
 
 export function StudentList() {
   const [students, setStudents] = useState<Student[]>([]);
-  const getData = async () => {
+  const getData = useCallback(async () => {
     const response = await fetch("/api/students");
     const jsonData = await response.json();
     setStudents(jsonData);
-  };
+  }, []);
   useEffect(() => {
     getData();
-  });
+  }, [getData]);
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
