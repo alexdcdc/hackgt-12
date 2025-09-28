@@ -24,7 +24,6 @@ export default function StudentsPage() {
                   </p>
                 </div>
               </div>
-              <StudentFilters />
               <StudentList />
             </div>
           </main>
